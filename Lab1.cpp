@@ -3,33 +3,16 @@
 
 using namespace std;
 
-
-
 class Element {
       public:
-             Element() {
-                       liczba=0;
-                       znak=0;
-                       liczba_d=0;
-             };    
+             Element();    
+             Element(int, char, double);
              ~Element(){};
-             void przepisz(Element);
+             
              void ustaw(int, char, double);
              int liczba;
              char znak;
-             double liczba_d;
-};
-
-void Element::przepisz(Element e) {
-     liczba=e.liczba;
-     znak=e.znak;
-     liczba_d=e.liczba_d;
-};
-
-void Element::ustaw(int _liczba, char _znak, double _liczba_d) {
-     liczba=_liczba;
-     znak=_znak;
-     liczba_d=_liczba_d;
+             double liczba_d; 
 };
 
 class TablicaE {
@@ -46,59 +29,6 @@ class TablicaE {
              Element **tab;  
              int liczba_elementow;
 };
-
-void TablicaE::wyswietlWszystko() {
-  for (int i=0; i<liczba_elementow; i++) wyswietl(i);   
-}
-
-void TablicaE::sortuj() {
-  int n = liczba_elementow;
-  do {
-      for (int i=0; i<n-1; i++) {
-          if (tab[i]->liczba>tab[i+1]->liczba) {
-             Element *tmp = tab[i];
-             
-             tab[i]=tab[i+1];
-             
-             tab[i+1]=tmp;
-          }
-      }
-      n--;
-  } while (n>1); 
-}
-
-void TablicaE::kasowanie() {
-     if (tab != NULL) {
-       for (int i=0; i<liczba_elementow; i++) tab[i]->~Element();  
-       delete [] tab;    
-     } 
-     tab=NULL;     
-}
-
-int TablicaE::zliczZnak(char _znak) {
-    int wynik=0;
-    for (int i=0; i<liczba_elementow; i++) if (tab[i]->znak == _znak) wynik++;
-    return(wynik);   
-}
-
-void TablicaE::wyswietl(int id) {
-     
-     if (id>=liczba_elementow && tab != NULL) cout << "Element o podanym ID nie istnieje"; 
-     else cout << "Znak: " << (int)tab[id]->znak << ", Liczba: " << tab[id]->liczba << ", Liczba (double): " << tab[id]->liczba_d << endl;
-}
-
-
-TablicaE::TablicaE(int ilosc) {
-      srand(time(0));
-      tab = new Element*[ilosc];
-      liczba_elementow=ilosc;
-      for (int i=0; i<ilosc; i++) {
-          tab[i]=new Element();
-      
-          tab[i]->ustaw(rand()% ilosc, rand() % 256, rand() % 1000);    
-      }
-};
-
 
 
 int main(int argc, char *argv[])
@@ -124,3 +54,61 @@ int main(int argc, char *argv[])
     system("PAUSE");
     return EXIT_SUCCESS;
 }
+
+//*---------------------class element--------------------------
+void Element::ustaw(int _liczba, char _znak, double _liczba_d) {
+     liczba=_liczba;
+     znak=_znak;
+     liczba_d=_liczba_d;
+};
+
+Element::Element() {
+     liczba=0; znak=0;liczba_d=0; 
+}
+
+Element::Element(int _liczba, char _znak, double _liczba_d) {
+     ustaw(_liczba, _znak, _liczba_d);
+}
+
+//*---------------------class TablicaE-------------------------
+void TablicaE::wyswietlWszystko() {
+  for (int i=0; i<liczba_elementow; i++) wyswietl(i);   
+}
+
+void TablicaE::sortuj() {
+  int n = liczba_elementow;
+  do {
+      for (int i=0; i<n-1; i++) if (tab[i]->liczba>tab[i+1]->liczba) {
+             Element *tmp = tab[i];      
+             tab[i]=tab[i+1];          
+             tab[i+1]=tmp;
+      }
+      n--;
+  } while (n>1); 
+}
+
+void TablicaE::kasowanie() {
+     if (tab != NULL) {
+       for (int i=0; i<liczba_elementow; i++) tab[i]->~Element();  
+       delete [] tab;    
+       tab=NULL;  
+     }  
+}
+
+int TablicaE::zliczZnak(char _znak) {
+    int wynik=0;
+    for (int i=0; i<liczba_elementow; i++) if (tab[i]->znak == _znak) wynik++;
+    return(wynik);   
+}
+
+void TablicaE::wyswietl(int id) {
+     if (id>=liczba_elementow && tab != NULL) cout << "Element o podanym ID nie istnieje"; 
+     else cout << "Znak: " << (int)tab[id]->znak << ", Liczba: " << tab[id]->liczba << ", Liczba (double): " << tab[id]->liczba_d << endl;
+}
+
+TablicaE::TablicaE(int ilosc) {
+      srand(time(0));
+      tab = new Element*[ilosc];
+      liczba_elementow=ilosc;
+      for (int i=0; i<ilosc; i++)  tab[i]=new Element(rand() % ilosc, rand() % 256, rand() % 1000);
+};
