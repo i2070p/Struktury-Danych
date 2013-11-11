@@ -226,6 +226,8 @@ string Node::getPath() {
 		tmp=tmp->getParent();
 		ss << " -> (" << tmp->getKey() << ")";
 	}
+	if(getLeft()) ss << "  Left: " << getLeft()->getKey();
+	if(getRight()) ss << "  Right: " << getRight()->getKey();; 
 	return(ss.str());
 }
 
