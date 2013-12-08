@@ -1,4 +1,4 @@
-// BST.cpp : Defines the entry point for the console application.
+// AVL.cpp : Defines the entry point for the console application.
 //
 
 #include "stdafx.h"
@@ -38,10 +38,10 @@ private:
 		int balance;
 };
 
-class BST {
+class AVL {
 public:
-        BST();
-        ~BST();
+        AVL();
+        ~AVL();
         bool addNode(long);
         bool removeNode(long);
         Node* getRoot();
@@ -57,60 +57,113 @@ public:
 		void RL(Node*);
 		void LR(Node*);
 		string toString(order);
+		int nodesCount();
 private:
         Node *root;
-        void deleteNode(Node*,int);
+        Node* deleteNode(Node*);
         void INOrder(stringstream*, Node*);
-
+		void computeNodes(int*, Node*);
 };
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 
-        BST *bst = new BST();
+        AVL *avl = new AVL();
 
-        bst->addNode(10);
-        bst->addNode(2);
-        bst->addNode(18);
-        bst->addNode(0);
-        bst->addNode(1);
-        bst->addNode(12);
-        bst->addNode(24);
-        bst->addNode(9);
-        bst->addNode(3);
-        bst->addNode(5);
-        bst->addNode(4);
-        bst->addNode(7);
-		//cout << bst->toString(INORDER)<<endl;
-      //  bst->removeNode(2);
-		//bst->RR(bst->locateNode(0));
-	    //bst->LL(bst->locateNode(2));
-		//bst->LR(bst->locateNode(2));
-		//bst->RL(bst->locateNode(10));
-                 cout << "poszlo\n";
-        cout << bst->toString(INORDER)<<endl;
+        avl->addNode(10);
+        avl->addNode(2);
+        avl->addNode(18);
+        avl->addNode(0);
+        avl->addNode(1);
+        avl->addNode(12);
+        avl->addNode(24);
+        avl->addNode(9);
+        avl->addNode(3);
+        avl->addNode(5);
+        avl->addNode(4);
+        avl->addNode(7);
+		avl->addRandomNodes(100000);
+        cout << "Poszlo\n";
+		cout << "Liczba wezlow na drzewie: " << avl->nodesCount() << endl;
+        avl->removeNode(10);
+		avl->removeNode(7);
+		avl->removeNode(5);
+		cout << avl->getRoot()->getKey() << endl;
+		avl->removeNode(avl->getRoot()->getKey());
+		cout << "Liczba wezlow na drzewie: " << avl->nodesCount() << endl;
+
+        //cout << avl->toString(INORDER)<<endl;
 
         getchar();
         return 0;
 }
 
-//**************************class BST*****************************
-BST::BST() {
+//**************************class AVL*****************************
+AVL::AVL() {
         root=NULL;
 }
 
 
-void  BST::RL(Node* node) {
-	LL(node->getRight());
-	RR(node);
+int AVL::nodesCount() {
+        int i=0;
+        computeNodes(&i, getRoot());
+        return(i);
 }
 
-void  BST::LR(Node* node) {
-	RR(node->getLeft());
-	LL(node);
+void AVL::computeNodes(int* count, Node* node) {
+        if (node) {
+                computeNodes(count, node->getLeft());
+                                (*count)++;
+                computeNodes(count, node->getRight());
+        }
 }
 
-void BST::LL(Node *node) {
+
+void  AVL::RL(Node* node) {
+  //LL(node->getRight());
+  //RR(node);
+  Node * L = node->getRight(), * LR = L->getLeft(), *parent = node->getParent();
+  L->setLeft(LR->getRight());
+  if(L->getLeft()) L->getLeft()->setParent(L);
+  node->setRight(LR->getLeft());
+  if(node->getRight()) node->getRight()->setParent(node);
+  LR->setLeft(node);
+  LR->setRight(L);
+  node->setParent(LR);
+  L->setParent(LR);
+  LR->setParent(parent);
+  if(parent) {
+    if(parent->getLeft() == node) parent->setLeft(LR); else parent->setRight(LR);
+  } else setRoot(LR);
+
+  if (LR->getBalance() == -1 ) node->setBalance(1); else node->setBalance(0);
+  if (LR->getBalance() == 1) L->setBalance(-1); else L->setBalance(0);
+  LR->setBalance(0);
+}
+
+void  AVL::LR(Node* node) {
+  //RR(node->getLeft());
+  //LL(node);
+  Node * L = node->getLeft(), * LR = L->getRight(), *parent = node->getParent();
+  L->setRight(LR->getLeft());
+  if(L->getRight()) L->getRight()->setParent(L);
+  node->setLeft(LR->getRight());
+  if(node->getLeft()) node->getLeft()->setParent(node);
+  LR->setRight(node);
+  LR->setLeft(L);
+  node->setParent(LR);
+  L->setParent(LR);
+  LR->setParent(parent);
+  if(parent) {
+    if(parent->getLeft() == node) parent->setLeft(LR); else parent->setRight(LR);
+  } else setRoot(LR);
+
+  if (LR->getBalance() == 1 ) node->setBalance(-1); else node->setBalance(0);
+  if (LR->getBalance() == -1) L->setBalance(1); else L->setBalance(0);
+  LR->setBalance(0);
+}
+
+void AVL::LL(Node *node) {
 	if (node) {
 		Node *tmp = node->getLeft(), *parent = node->getParent();
 		node->setLeft(tmp->getRight());
@@ -122,7 +175,7 @@ void BST::LL(Node *node) {
 			if(parent->getLeft() == node) parent->setLeft(tmp); else parent->setRight(tmp);
 		} else setRoot(tmp);
 
-		if(tmp->getBalance() == -1) {
+		if(tmp->getBalance() == 1) {
 			node->setBalance(0);
 			tmp->setBalance(0);
 		} else {
@@ -133,65 +186,111 @@ void BST::LL(Node *node) {
 
 }
 
-void BST::RR(Node *node) {
-	Node *tmp = node->getRight(), *parent = node->getParent();
-	node->setRight(tmp->getLeft());
-	if (node->getRight()) node->getRight()->setParent(node);
-	tmp->setLeft(node);
-	tmp->setParent(parent);
-	node->setParent(tmp);
-	if(parent) {
-		if(parent->getLeft() == node) parent->setLeft(tmp); else parent->setRight(tmp);
-	} else setRoot(tmp);
+void AVL::RR(Node *node) {
+	if (node) {
+		Node *tmp = node->getRight(), *parent = node->getParent();
+		node->setRight(tmp->getLeft());
+		if (node->getRight()) node->getRight()->setParent(node);
+		tmp->setLeft(node);
+		tmp->setParent(parent);
+		node->setParent(tmp);
+		if(parent) {
+			if(parent->getLeft() == node) parent->setLeft(tmp); else parent->setRight(tmp);
+		} else setRoot(tmp);
 
-	if(tmp->getBalance() == -1) {
-		node->setBalance(0);
-		tmp->setBalance(0);
-	} else {
-		node->setBalance(-1); 
-		tmp->setBalance(1);
+		if(tmp->getBalance() == -1) {
+			node->setBalance(0);
+			tmp->setBalance(0);
+		} else {
+			node->setBalance(-1); 
+			tmp->setBalance(1);
+		}
 	}
 }
 
-void BST::deleteNode(Node *n, int depth) {
-        ++depth;
-        Node *parent=n->getParent(), *tmp=NULL;
-        if(n->have2Child()) {
-                srand(time(NULL));
-                if (rand() % 2) tmp = getPrev(n->getKey()); else tmp = getNext(n->getKey());
-                deleteNode(tmp, depth);
-
-                tmp->setLeft(n->getLeft());
-                if(tmp->getLeft()) tmp->getLeft()->setParent(tmp);
-
-                tmp->setRight(n->getRight());
-                if(tmp->getRight()) tmp->getRight()->setParent(tmp);
-        } else if (n->getLeft()) tmp=n->getLeft(); else tmp=n->getRight();
-
-        if(tmp) tmp->setParent(parent);
-        if(!parent) setRoot(tmp); else if (parent->getLeft()==n) parent->setLeft(tmp); else parent->setRight(tmp);
-        if (depth==0) delete(n);
+Node* AVL::deleteNode(Node *node) {
+	Node *tmp, *tmp_p, *tmp2;
+	bool b;
+	if((node->getLeft()) && (node->getRight())) {
+		tmp_p = deleteNode(getPrev(node->getKey()));
+		b = false;
+	}
+	else {
+		if(node->getLeft()) {
+			tmp_p = node->getLeft(); node->setLeft(NULL);
+		} else {
+			tmp_p = node->getRight(); node->setRight(NULL);
+		}
+		node->setBalance(0);
+		b = true;
+	}
+	if(tmp_p) {
+		tmp_p->setParent(node->getParent());
+		tmp_p->setLeft(node->getLeft());
+		if(tmp_p->getLeft())  tmp_p->getLeft()->setParent(tmp_p);
+		tmp_p->setRight(node->getRight());
+		if(tmp_p->getRight()) tmp_p->getRight()->setParent(tmp_p);
+		tmp_p->setBalance(node->getBalance());
+	}
+	if(node->getParent()) {
+		if(node->getParent()->getLeft() == node) node->getParent()->setLeft(tmp_p); else node->getParent()->setRight(tmp_p);
+	}
+	else root = tmp_p;
+	if(b) {
+		tmp2 = tmp_p;
+		tmp_p = node->getParent();
+		while(tmp_p) {
+			if(!(tmp_p->getBalance())) {
+				tmp_p->setBalance((tmp_p->getLeft() == tmp2) ? -1 : 1);
+				break;
+			}
+			else {
+				if(((tmp_p->getBalance() ==  1) && (tmp_p->getLeft()  == tmp2)) || ((tmp_p->getBalance() == -1) && (tmp_p->getRight() == tmp2))) {
+					tmp_p->setBalance(0);
+					tmp2 = tmp_p; tmp_p = tmp_p->getParent();
+				}
+				else {
+					tmp = (tmp_p->getLeft() == tmp2) ? tmp_p->getRight() : tmp_p->getLeft();
+					if(!(tmp->getBalance())) {
+						if(tmp_p->getBalance() == 1) LL(tmp_p); else RR(tmp_p);
+						break;                      
+					}
+					else if(tmp_p->getBalance() == tmp->getBalance()) {
+						if(tmp_p->getBalance() == 1) LL(tmp_p); else RR(tmp_p);
+						tmp2 = tmp; tmp_p = tmp->getParent();            
+					}
+					else {
+						if(tmp_p->getBalance() == 1) LR(tmp_p); else RL(tmp_p);
+						tmp2 = tmp_p->getParent(); tmp_p = tmp2->getParent();              
+					}
+				}
+			}
+		}
+	}
+	return node;
 }
 
-bool BST::removeNode(long key) {
+
+
+bool AVL::removeNode(long key) {
         Node* tmp=locateNode(key);
-        if (tmp) deleteNode(tmp,0); else return(false);
+        if (tmp) deleteNode(tmp); else return(false);
         return(true);
 }
 
-Node* BST::getMaxKeyNode(Node* node) {
+Node* AVL::getMaxKeyNode(Node* node) {
         Node *tmp = node;
         while(tmp->getRight()) tmp=tmp->getRight();
         if (tmp) return(tmp); else return(NULL);
 }
 
-Node* BST::getMinKeyNode(Node* node) {
+Node* AVL::getMinKeyNode(Node* node) {
         Node *tmp = node;
         while(tmp->getLeft()) tmp=tmp->getLeft();
         if (tmp) return(tmp); else return(NULL);
 }
 
-Node* BST::getNext(long key) {
+Node* AVL::getNext(long key) {
         Node *tmp = locateNode(key);
         if (tmp) {
                 if (tmp->getRight()) return(getMinKeyNode(tmp->getRight()));
@@ -204,7 +303,7 @@ Node* BST::getNext(long key) {
         return(tmp);
 }
 
-Node* BST::getPrev(long key) {
+Node* AVL::getPrev(long key) {
         Node *tmp = locateNode(key);
         if (tmp) {
                 if (tmp->getLeft()) return(getMaxKeyNode(tmp->getLeft()));
@@ -217,7 +316,7 @@ Node* BST::getPrev(long key) {
         return(tmp);
 }
 
-Node* BST::locateNode(long key) {
+Node* AVL::locateNode(long key) {
         Node *tmp = getRoot();
         while (tmp) {
                 if (tmp->getKey()==key) return(tmp);
@@ -226,7 +325,7 @@ Node* BST::locateNode(long key) {
         return(NULL);
 }
 
-void BST::addRandomNodes(int count) {
+void AVL::addRandomNodes(int count) {
          srand((unsigned int)time(0));
         long key=(rand() % 10)+1+getMaxKeyNode(getRoot())->getKey();
                 int i=0;
@@ -241,16 +340,16 @@ void BST::addRandomNodes(int count) {
         }
 }
 
-void BST::INOrder(stringstream *ss, Node *node) {
+void AVL::INOrder(stringstream *ss, Node *node) {
         if (node) {
                 INOrder(ss, node->getLeft());
-                //*ss << node->getKey() << " ";
-                *ss<< node->getPath() <<endl;
+                *ss << node->getKey() << " ";
+                //*ss<< node->getPath() <<endl;
                 INOrder(ss, node->getRight());
         }
 }
 
-string BST::toString(order _order) {
+string AVL::toString(order _order) {
         stringstream ss;
         switch (_order) {
         case INORDER:
@@ -263,61 +362,91 @@ string BST::toString(order _order) {
         return(ss.str());
 }
 
-bool BST::addNode(long key) {
-	Node *n = new Node(key);   
-	Node * y = NULL, * z, *x=getRoot();
-	while(x) {
-		if(x->getKey() == n->getKey()) {
-			delete n;
-			return(false);
-		}
-		y = x;
-		x = (n->getKey() < x->getKey()) ? x->getLeft() : x->getRight();
-	}
-	n->setParent(y);
-	if(!(n->getParent())) {
-		root = n;
-		return true;
-	}
+/* schemat dodawania 
 
-	if(n->getKey() < y->getKey()) y->setLeft(n); else y->setRight(n);
-	if(y->getBalance()) {
-		y->setBalance(0);
-		return true;
-	}
-	y->setBalance((y->getLeft() == n) ? 1 : -1);
-	z = y->getParent();
-	while(z) {
-		if(z->getBalance()) break;
-		z->setBalance((z->getLeft() == y) ? 1 : -1);
-		y = z; z = z-> getParent();
-	}
+1.Wstawiamy wezel tradycyjnie jak w AVL
 
-	if(!z) return true;
+2.Sprawdzamy czy rodzic wstawionego wezla ma balance!=0 jezeli tak to ustawiamy jego balance na 0 i konczymy (bo nastapila rownowaga)
 
-	if(z->getBalance() == 1) {
-		if(z->getRight() == y) {
-			z->setBalance(0);
-			return true;
+3.Jezeli rodzic wstawionego wezla ma balance==0 to ustawiamy je na 1 (jezeli wstawiony wezel jest jego lewym potomkiem) lub -1 (jezeli wstawiony wezel jest jego prawym potomkiem)
+
+4.Rozpoczynamy wedrowke od rodzica nowo-wstawionego wezla az do rodzica roota (NULL'a). Wedrowka przerywa sie w momencie gdy dotrzemy do celu
+lub gdy balance ktoregos z napotkanych wezlow jest rozne od 0
+po tej operacji musimy miec 2 informacje (wezel ktory wedrowal (tmp_p_p) i jego dziecko (tmp)
+
+5.Jezeli wedrowka dobiegla szczesliwie do konca (bez przerwania czyli dotarla az do rodzica roota (NULL'a)) to znaczy ze wszystkie napotkane wezly sa w stanie rownowagi (balance==0)
+stad wynika ze drzewo jest wywazone wiec konczymy (return(true);)
+
+6.Jezeli wedrowka nie dobiegla szczesliwie do konca to sprawdzamy czy balance wezla na ktorym sie zatrzymala (nazywany dalej wezlem A) jest rowny 1
+-jezeli jest rowny 1 to sprawdz czy prawy potomek wezla A jest wezlem tmp jezeli tak to ustaw balance wezla A na 0 i zakoncz operacje wstawiania w przeciwnym wypadku sprawdz czy balance wezla tmp jest rowne 1 jezeli jest to wykonaj rotacje LL(A) jezeli nie to rotacje LR(A)
+-jezeli jest rowny -1 to sprawdz czy lewy potomek wezla A jest wezlem tmp jezeli tak to ustaw balance wezla A na 0 i zakoncz operacje wstawiania w przeciwnym wypadku sprawdz czy balance wezla tmp jest rowne -1 jezeli jest to wykonaj rotacje RR(A) jezeli nie to rotacje RL(A)
+
+*/
+bool AVL::addNode(long key) {
+	//<1>
+	if (getRoot()==NULL) {
+		Node *n = new Node(key);
+		setRoot(n);
+	} else {
+		Node *tmp = getRoot(), *tmp_p = NULL;
+
+		while (tmp) {
+			if (tmp->getKey()==key) return(false);
+			tmp_p=tmp;
+			if (key<tmp->getKey()) tmp=tmp->getLeft(); else tmp=tmp->getRight();
 		}
-		if(y->getBalance() == -1) LR(z); else LL(z);
-		return true;
-	}
-	else {
-		if(z->getLeft() == y) {
-			z->setBalance(0);
-			return true;
+		Node *n = new Node(key, tmp_p);
+		if (key<tmp_p->getKey()) tmp_p->setLeft(n); else tmp_p->setRight(n);
+	 //</1>
+     //<2>
+		if (tmp_p->getBalance()) {
+			tmp_p->setBalance(0);
+			return(true);
 		}
-		if(y->getBalance() == 1) RL(z); else RR(z);
-		return true;
+     //</2>
+     
+	 //<3>
+		if (tmp_p->getLeft()==n) tmp_p->setBalance(1); else tmp_p->setBalance(-1);
+		//tmp_p->setBalance((tmp_p->getLeft()==n)?1:-1);
+	 //</3>	
+	 //<4>
+		Node * tmp_p_p=tmp_p->getParent();
+		tmp=tmp_p;
+		while (tmp_p_p && !tmp_p_p->getBalance()) {
+			if (tmp_p_p->getLeft()==tmp) tmp_p_p->setBalance(1); else tmp_p_p->setBalance(-1);
+			//tmp_p_p->setBalance((tmp_p_p->getLeft()==tmp)?1:-1);
+			tmp=tmp_p_p;
+			tmp_p_p=tmp_p_p->getParent();
+		}
+	 //</4>	
+	 //<5>
+		if(tmp_p_p==NULL) return(true);
+     //</5>
+	 //<6>
+		if (tmp_p_p->getBalance()==1) {
+			if (tmp_p_p->getRight()==tmp) {
+				tmp_p_p->setBalance(0);
+				return(true);
+			}
+			if (tmp->getBalance()==1) LL(tmp_p_p); else LR(tmp_p_p);
+			return(true);
+		} else {
+			if (tmp_p_p->getLeft()==tmp) {
+				tmp_p_p->setBalance(0);
+				return(true);
+			}
+			if (tmp->getBalance()==-1) RR(tmp_p_p); else RL(tmp_p_p);
+			return(true);
+		}
+	 //</6>
 	}
 }
 
-void BST::setRoot(Node* _root) {
+void AVL::setRoot(Node* _root) {
         root=_root;
 }
 
-Node* BST::getRoot() {
+Node* AVL::getRoot() {
         return(root);
 }
 
